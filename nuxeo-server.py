@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 def download(url, path):
     response = urllib2.urlopen(url)
-    file_object = open(path + '.zip', 'wb')
+    file_object = open(path, 'wb')
     meta = response.info()
     file_size = int(meta.getheaders('Content-Length')[0])
     message = 'Downloading (%s MB) ' % (file_size / 1024 / 1024)
@@ -30,14 +30,20 @@ def download(url, path):
         status += chr(8) * (len(status) + 1)
         sys.stdout.write(status)
     file_object.close()
+
+
+def unzip(path_zip, path_content):
     print('Extracting...')
-    zip_object = zipfile.ZipFile(os.path.abspath(path + '.zip'), 'r')
+    zip_object = zipfile.ZipFile(os.path.abspath(path_zip), 'r')
     zip_object.extractall()
     zip_object.close()
     original_path = os.path.abspath(zip_object.namelist()[0])
-    os.rename(original_path, path)
-    os.remove(path + '.zip')
-    print('  ' + os.path.abspath(path))
+    os.rename(original_path, path_content)
+    print('  ' + os.path.abspath(path_content))
+
+
+def delete_file(path):
+    os.remove(path)
 
 
 def make_executable(path):
@@ -110,6 +116,12 @@ def user_accepts(message):
 if args.command == 'download':
     download(args.args[0], args.args[1])
 
+if args.command == 'unzip':
+    unzip(args.args[0], args.args[1])
+
+if args.command == 'delete-file':
+    delete_file(args.args[0])
+
 if args.command == 'make-executable':
     make_executable(args.args[0])
 
@@ -126,27 +138,22 @@ if args.command == 'install-package':
     install_package(args.args[0], args.args[1])
 
 if args.command is None:
+
     server_path = raw_input('Server directory name (or full path): ')
     if server_path == '':
-        print('Invalid value.')
+        print('Invalid value')
         sys.exit(0)
-    servers_available = [['9.1-SNAPSHOT', 'https://maven-eu.nuxeo.org/nexus/service/local/artifact/maven/redirect?'
-                                          'r=public-snapshots&g=org.nuxeo.ecm.distribution&'
-                                          'a=nuxeo-server-tomcat&v=9.1-SNAPSHOT&e=zip'],
-                         ['8.10-SNAPSHOT', 'https://maven-eu.nuxeo.org/nexus/service/local/artifact/maven/redirect?'
-                                           'r=public-snapshots&g=org.nuxeo.ecm.distribution&'
-                                           'a=nuxeo-server-tomcat&v=8.10-SNAPSHOT&e=zip'],
-                         ['7.10-SNAPSHOT', 'https://maven-eu.nuxeo.org/nexus/service/local/artifact/maven/redirect?'
-                                           'r=public-snapshots&g=org.nuxeo.ecm.distribution&'
-                                           'a=nuxeo-distribution-tomcat&v=7.10-SNAPSHOT&e=zip&c=nuxeo-cap'],
-                         ['6.0-SNAPSHOT', 'https://maven-eu.nuxeo.org/nexus/service/local/artifact/maven/redirect?'
-                                          'r=public-snapshots&g=org.nuxeo.ecm.distribution&'
-                                          'a=nuxeo-distribution-tomcat&v=6.0-SNAPSHOT&e=zip&c=nuxeo-cap']]
-    for server_available in servers_available:
-        print('[%d] %s' % (servers_available.index(server_available) + 1, server_available[0]))
-    selected_idx_str = raw_input('Select the instance version: ')
-    selected_idx = 0 if selected_idx_str == '' else (int(selected_idx_str) - 1)
-    download(servers_available[selected_idx][1], server_path)
+    print('[1] Download server zip from URL')
+    print('[2] Use a local server zip file')
+    answer = int(raw_input('Select the server file source: '))
+    if answer == 2:
+        answer = raw_input('Path to the local server zip file: ')
+        unzip(answer, server_path)
+    else:
+        answer = raw_input('Server zip URL: ')
+        download(answer, 'tmp')
+        unzip('tmp', server_path)
+        delete_file('tmp')
     make_executable(server_path)
     if user_accepts('Setup CORS? [y] '):
         setup_cors(server_path)
