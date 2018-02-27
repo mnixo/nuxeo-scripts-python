@@ -1,0 +1,15 @@
+{
+  "name": "nuxeo-scripts",
+  "version": "0.0.1",
+  "description": "",
+  "main": "nuxeo-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mnixo",
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.83.0",
+    "unzip": "^0.1.11"
+  }
+}
