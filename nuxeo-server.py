@@ -138,7 +138,6 @@ if args.command == 'install-package':
     install_package(args.args[0], args.args[1])
 
 if args.command is None:
-
     server_path = raw_input('Server directory name (or full path): ')
     if server_path == '':
         print('Invalid value')
@@ -161,7 +160,23 @@ if args.command is None:
         register(server_path)
     if user_accepts('Enable debug flags? [y] '):
         enable_debug(server_path)
-    if user_accepts('Install nuxeo-jsf-ui marketplace package? [y] '):
-        install_package(server_path, 'nuxeo-jsf-ui')
-    if user_accepts('Install nuxeo-web-ui marketplace package? [y] '):
-        install_package(server_path, 'nuxeo-web-ui')
+    while True:
+        os.system('./' + server_path + '/bin/nuxeoctl mp-list')
+        print('[1] Do not install additional packages')
+        print('[2] Download and install package zip from URL')
+        print('[3] Install a local package zip file')
+        print('[4] Install package with mp-install')
+        answer = int(raw_input('Install a marketplace package? '))
+        if answer == 2:
+            answer = raw_input('Package zip URL: ')
+            download(answer, 'tmp')
+            os.system('./' + server_path + '/bin/nuxeoctl mp-install tmp')
+            delete_file('tmp')
+        elif answer == 3:
+            answer = raw_input('Path to the package zip: ')
+            os.system('./' + server_path + '/bin/nuxeoctl mp-install ' + answer)
+        elif answer == 4:
+            answer = raw_input('Package id: ')
+            os.system('./' + server_path + '/bin/nuxeoctl mp-install ' + answer)
+        else:
+            break
